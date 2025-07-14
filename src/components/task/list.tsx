@@ -100,6 +100,10 @@ export function TaskList({ groupedTasks, updateTask, deleteTask, reorderTasks, r
             onDragOver={(e) => handleDragOver(e, category, null)}
             onDrop={(e) => handleDrop(e, category, null)}
             onDragLeave={() => setDropTarget(null)}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              dropTarget?.category === category ? "bg-muted/50" : ""
+            )}
           >
             <div className="flex items-center gap-2 mb-4 group">
               <CategoryIcon className="h-5 w-5 text-accent" />
@@ -126,35 +130,43 @@ export function TaskList({ groupedTasks, updateTask, deleteTask, reorderTasks, r
                 </h2>
               )}
             </div>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {groupedTasks[category].map(task => (
                 <div
                   key={task.id}
-                  onDragOver={(e) => handleDragOver(e, category, task.id)}
-                  onDrop={(e) => handleDrop(e, category, task.id)}
+                  onDragOver={(e) => {
+                    e.stopPropagation();
+                    handleDragOver(e, category, task.id)
+                  }}
+                  onDrop={(e) => {
+                    e.stopPropagation();
+                    handleDrop(e, category, task.id)
+                  }}
                 >
-                  <TaskCard
-                    task={task}
-                    updateTask={updateTask}
-                    deleteTask={deleteTask}
-                    onDragStart={handleDragStart}
-                  />
                   <div
                     className={cn(
-                      'h-2 rounded-md transition-all duration-150',
+                      'h-0 rounded-lg transition-all duration-150',
                       dropTarget?.category === category && dropTarget.taskId === task.id
-                        ? 'bg-primary/20 mt-2'
-                        : 'bg-transparent'
+                        ? 'h-14 bg-primary/20 border-2 border-dashed border-primary my-1'
+                        : ''
                     )}
                   />
+                  <div style={{ opacity: draggedItemId === task.id ? 0.5 : 1 }}>
+                    <TaskCard
+                      task={task}
+                      updateTask={updateTask}
+                      deleteTask={deleteTask}
+                      onDragStart={(e) => handleDragStart(e, task.id)}
+                    />
+                  </div>
                 </div>
               ))}
               <div
                 className={cn(
-                  'h-2 rounded-md transition-all duration-150',
+                  'h-0 rounded-lg transition-all duration-150',
                   dropTarget?.category === category && dropTarget.taskId === null
-                    ? 'bg-primary/20 mt-2'
-                    : 'bg-transparent'
+                    ? 'h-14 bg-primary/20 border-2 border-dashed border-primary my-1'
+                    : ''
                 )}
               />
             </div>
