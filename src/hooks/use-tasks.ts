@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -23,19 +24,36 @@ export function useTasks() {
       }
       const storedCompletedTasks = localStorage.getItem(COMPLETED_STORAGE_KEY);
       if (storedCompletedTasks) {
-        const parsedCompleted = JSON.parse(storedCompletedTasks);
+        const parsedCompleted: Task[] = JSON.parse(storedCompletedTasks);
         const now = Date.now();
         const retentionPeriod = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
-        const filteredCompleted = parsedCompleted.filter(
-          (task: Task) => task.completedAt && now - task.completedAt < retentionPeriod
-        );
-        setCompletedTasks(filteredCompleted);
+        
+        const keptTasks: Task[] = [];
+        let removedCount = 0;
+
+        for (const task of parsedCompleted) {
+          if (task.completedAt && now - task.completedAt < retentionPeriod) {
+            keptTasks.push(task);
+          } else {
+            removedCount++;
+          }
+        }
+        
+        setCompletedTasks(keptTasks);
+
+        if (removedCount > 0) {
+          toast({
+            title: 'Tasks Cleared',
+            description: `${removedCount} completed task${removedCount > 1 ? 's' : ''} older than ${TRASH_RETENTION_DAYS} days have been removed.`,
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to load tasks from localStorage', error);
     } finally {
       setIsInitialized(true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
