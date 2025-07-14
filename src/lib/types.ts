@@ -4,4 +4,5 @@ export interface Task {
   category: string;
   priority: number;
   completed: boolean;
+  completedAt?: number;
 }

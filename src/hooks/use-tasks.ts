@@ -6,9 +6,12 @@ import { adjustTaskCategories as adjustTaskCategoriesFlow } from '@/ai/flows/adj
 import { useToast } from '@/hooks/use-toast';
 
 const STORAGE_KEY = 'taskwise-ai-tasks';
+const COMPLETED_STORAGE_KEY = 'taskwise-ai-completed-tasks';
+const TRASH_RETENTION_DAYS = 7;
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const { toast } = useToast();
 
@@ -17,6 +20,16 @@ export function useTasks() {
       const storedTasks = localStorage.getItem(STORAGE_KEY);
       if (storedTasks) {
         setTasks(JSON.parse(storedTasks));
+      }
+      const storedCompletedTasks = localStorage.getItem(COMPLETED_STORAGE_KEY);
+      if (storedCompletedTasks) {
+        const parsedCompleted = JSON.parse(storedCompletedTasks);
+        const now = Date.now();
+        const retentionPeriod = TRASH_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+        const filteredCompleted = parsedCompleted.filter(
+          (task: Task) => task.completedAt && now - task.completedAt < retentionPeriod
+        );
+        setCompletedTasks(filteredCompleted);
       }
     } catch (error) {
       console.error('Failed to load tasks from localStorage', error);
@@ -29,11 +42,12 @@ export function useTasks() {
     if (isInitialized) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        localStorage.setItem(COMPLETED_STORAGE_KEY, JSON.stringify(completedTasks));
       } catch (error) {
         console.error('Failed to save tasks to localStorage', error);
       }
     }
-  }, [tasks, isInitialized]);
+  }, [tasks, completedTasks, isInitialized]);
   
   const handleSetTasks = useCallback((newTasks: Task[]) => {
     setTasks(newTasks);
@@ -45,11 +59,28 @@ export function useTasks() {
   }, []);
 
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(task => (task.id === id ? { ...task, ...updates } : task)));
-  }, []);
+    if (updates.completed === true) {
+      const taskToComplete = tasks.find(t => t.id === id);
+      if (taskToComplete) {
+        setTasks(prev => prev.filter(t => t.id !== id));
+        setCompletedTasks(prev => [{ ...taskToComplete, ...updates, completedAt: Date.now() }, ...prev]);
+      }
+    } else if (updates.completed === false) {
+        const taskToUncomplete = completedTasks.find(t => t.id === id);
+        if (taskToUncomplete) {
+            setCompletedTasks(prev => prev.filter(t => t.id !== id));
+            const { completedAt, ...rest } = taskToUncomplete;
+            setTasks(prev => [{ ...rest, ...updates }, ...prev]);
+        }
+    } else {
+        setTasks(prev => prev.map(task => (task.id === id ? { ...task, ...updates } : task)));
+        setCompletedTasks(prev => prev.map(task => (task.id === id ? { ...task, ...updates } : task)));
+    }
+  }, [tasks, completedTasks]);
 
   const deleteTask = useCallback((id: string) => {
     setTasks(prev => prev.filter(task => task.id !== id));
+    setCompletedTasks(prev => prev.filter(task => task.id !== id));
   }, []);
 
   const reorderTasks = useCallback((draggedTaskId: string, targetTaskId: string | null, targetCategory: string) => {
@@ -115,6 +146,7 @@ export function useTasks() {
 
   return {
     tasks,
+    completedTasks,
     setTasks: handleSetTasks,
     addTask,
     updateTask,

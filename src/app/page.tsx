@@ -4,20 +4,22 @@ import React from 'react';
 import { AppHeader } from '@/components/header';
 import { TaskGenerator } from '@/components/task/generator';
 import { TaskList } from '@/components/task/list';
+import { CompletedTaskList } from '@/components/task/completed-list';
 import { useTasks } from '@/hooks/use-tasks';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 export default function Home() {
   const {
     tasks,
     setTasks,
-    addTask,
     updateTask,
     deleteTask,
     reorderTasks,
     adjustCategories,
     renameCategory,
     isInitialized,
+    completedTasks,
   } = useTasks();
 
   const groupedTasks = React.useMemo(() => {
@@ -52,13 +54,21 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <TaskList
-                groupedTasks={groupedTasks}
-                updateTask={updateTask}
-                deleteTask={deleteTask}
-                reorderTasks={reorderTasks}
-                renameCategory={renameCategory}
-              />
+              <>
+                <TaskList
+                  groupedTasks={groupedTasks}
+                  updateTask={updateTask}
+                  deleteTask={deleteTask}
+                  reorderTasks={reorderTasks}
+                  renameCategory={renameCategory}
+                />
+                {completedTasks.length > 0 && (
+                  <div className="mt-12">
+                    <Separator className="my-8" />
+                    <CompletedTaskList tasks={completedTasks} updateTask={updateTask} deleteTask={deleteTask} />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
