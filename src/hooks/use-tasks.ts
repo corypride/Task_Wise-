@@ -103,6 +103,15 @@ export function useTasks() {
     }
   }, [tasks, toast]);
 
+  const renameCategory = useCallback((oldCategory: string, newCategory: string) => {
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.category === oldCategory ? { ...task, category: newCategory } : task
+      )
+    );
+    toast({ title: `Category renamed to "${newCategory}"`});
+  }, [toast]);
+
 
   return {
     tasks,
@@ -112,6 +121,7 @@ export function useTasks() {
     deleteTask,
     reorderTasks,
     adjustCategories,
+    renameCategory,
     isInitialized,
   };
 }

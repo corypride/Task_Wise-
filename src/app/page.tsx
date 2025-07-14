@@ -16,6 +16,7 @@ export default function Home() {
     deleteTask,
     reorderTasks,
     adjustCategories,
+    renameCategory,
     isInitialized,
   } = useTasks();
 
@@ -56,6 +57,7 @@ export default function Home() {
                 updateTask={updateTask}
                 deleteTask={deleteTask}
                 reorderTasks={reorderTasks}
+                renameCategory={renameCategory}
               />
             )}
           </div>
