@@ -6,6 +6,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -56,8 +57,29 @@ export function ExportDialog({ tasks }: ExportDialogProps) {
     });
   };
 
+  const handleDownload = () => {
+    const username = "user";
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `${username}_${date}.md`;
+
+    const blob = new Blob([formattedTasks], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+        title: 'Download Started',
+        description: `Your task list is being downloaded as ${filename}.`,
+    });
+  };
+
   return (
-    <Dialog>
+    <Dialog onOpenChange={() => setHasCopied(false)}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={tasks.length === 0}>
           <Download className="mr-2 h-4 w-4" />
@@ -68,7 +90,7 @@ export function ExportDialog({ tasks }: ExportDialogProps) {
         <DialogHeader>
           <DialogTitle>Export Task List</DialogTitle>
           <DialogDescription>
-            Copy your task list in markdown format.
+            Copy your task list in markdown format or download it as a file.
           </DialogDescription>
         </DialogHeader>
         <div className="relative">
@@ -83,10 +105,17 @@ export function ExportDialog({ tasks }: ExportDialogProps) {
             variant="ghost"
             onClick={handleCopy}
             className="absolute top-2 right-2 h-8 w-8"
+            aria-label="Copy to clipboard"
           >
             {hasCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
           </Button>
         </div>
+        <DialogFooter>
+            <Button onClick={handleDownload} variant="secondary" className="w-full sm:w-auto">
+                <Download className="mr-2 h-4 w-4" />
+                Download File
+            </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
