@@ -9,6 +9,8 @@ import { useTasks } from '@/hooks/use-tasks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 
+export type SortDirection = 'asc' | 'desc';
+
 export default function Home() {
   const {
     tasks,
@@ -22,8 +24,17 @@ export default function Home() {
     completedTasks,
   } = useTasks();
 
+  const [sortDirections, setSortDirections] = React.useState<Record<string, SortDirection>>({});
+
+  const toggleSortDirection = (category: string) => {
+    setSortDirections(prev => ({
+      ...prev,
+      [category]: prev[category] === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
   const groupedTasks = React.useMemo(() => {
-    return tasks.reduce((acc, task) => {
+    const groups = tasks.reduce((acc, task) => {
       const category = task.category || 'Uncategorized';
       if (!acc[category]) {
         acc[category] = [];
@@ -31,7 +42,21 @@ export default function Home() {
       acc[category].push(task);
       return acc;
     }, {} as Record<string, typeof tasks>);
-  }, [tasks]);
+
+    // Sort tasks within each group based on its sort direction
+    for (const category in groups) {
+      const direction = sortDirections[category] || 'asc';
+      groups[category].sort((a, b) => {
+        if (direction === 'asc') {
+          return a.priority - b.priority;
+        } else {
+          return b.priority - a.priority;
+        }
+      });
+    }
+
+    return groups;
+  }, [tasks, sortDirections]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -61,6 +86,8 @@ export default function Home() {
                   deleteTask={deleteTask}
                   reorderTasks={reorderTasks}
                   renameCategory={renameCategory}
+                  sortDirections={sortDirections}
+                  toggleSortDirection={toggleSortDirection}
                 />
                 {completedTasks.length > 0 && (
                   <div className="mt-12">

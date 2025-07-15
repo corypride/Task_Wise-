@@ -106,20 +106,47 @@ export function useTasks() {
       const draggedTask = currentTasks.find(t => t.id === draggedTaskId);
       if (!draggedTask) return currentTasks;
 
+      // Create a new list without the dragged task
       const tasksWithoutDragged = currentTasks.filter(t => t.id !== draggedTaskId);
-      const targetIndex = tasksWithoutDragged.findIndex(t => t.id === targetTaskId);
-
-      const updatedTask = { ...draggedTask, category: targetCategory };
       
-      if (targetTaskId === null) {
-        // Dropped on a category, append to the end of that category
-        const categoryTasks = tasksWithoutDragged.filter(t => t.category === targetCategory);
-        const otherTasks = tasksWithoutDragged.filter(t => t.category !== targetCategory);
-        return [...otherTasks, ...categoryTasks, updatedTask];
+      // Find the target index in the filtered list
+      const targetIndex = targetTaskId ? tasksWithoutDragged.findIndex(t => t.id === targetTaskId) : -1;
+
+      // Update the dragged task's category
+      const updatedDraggedTask = { ...draggedTask, category: targetCategory };
+
+      // Create the new list with the task in its new position
+      let reorderedTasks: Task[];
+      if (targetIndex !== -1) {
+        tasksWithoutDragged.splice(targetIndex, 0, updatedDraggedTask);
+        reorderedTasks = tasksWithoutDragged;
       } else {
-        tasksWithoutDragged.splice(targetIndex, 0, updatedTask);
-        return tasksWithoutDragged;
+        // If dropped on category header (targetTaskId is null), add to the end
+        reorderedTasks = [...tasksWithoutDragged, updatedDraggedTask];
       }
+
+      // Now, re-calculate priorities for all tasks in the affected categories
+      const affectedCategories = new Set([draggedTask.category, targetCategory]);
+
+      return reorderedTasks.map(task => {
+        if (affectedCategories.has(task.category)) {
+          // Filter tasks of the same category, sort them, and re-assign priority
+          const categoryTasks = reorderedTasks
+            .filter(t => t.category === task.category)
+            .sort((a,b) => a.priority - b.priority); // sort by old priority first
+          
+          const newPriority = categoryTasks.findIndex(t => t.id === task.id) + 1;
+          
+          if (newPriority > 0) {
+            return { ...task, priority: newPriority };
+          }
+        }
+        return task;
+      }).map(task => { // Second pass to re-assign priorities based on order
+        const categoryTasks = reorderedTasks.filter(t => t.category === task.category);
+        const newPriority = categoryTasks.findIndex(t => t.id === task.id) + 1;
+        return {...task, priority: newPriority};
+      });
     });
   }, []);
 
