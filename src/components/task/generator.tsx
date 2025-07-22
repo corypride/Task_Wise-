@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Sparkles, Loader2 } from 'lucide-react';
 import type { Task } from '@/lib/types';
+import { v4 as uuidv4 } from 'uuid';
+
 
 interface TaskGeneratorProps {
   setTasks: (tasks: Task[]) => void;
@@ -32,7 +34,7 @@ export function TaskGenerator({ setTasks }: TaskGeneratorProps) {
     try {
       const result = await generateTaskList({ description });
       const newTasks: Task[] = result.taskList.map(task => ({
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         ...task,
         title: task.task,
         completed: false,
