@@ -51,7 +51,32 @@ const generateTaskListFlow = ai.defineFlow(
     outputSchema: GenerateTaskListOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const maxRetries = 3;
+    const baseDelay = 1000; // milliseconds
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const { output } = await prompt(input);
+        return output!;
+      } catch (err: any) {
+        const is503 = err?.message?.includes('503') || err?.toString().includes('503');
+        
+        // NOTE: The Gemini API can return 503 Service Unavailable when the model is overloaded or undergoing maintenance.
+        // This retry loop adds resilience by attempting the call up to 3 times with exponential backoff (1s, 2s, 4s).
+        // Without this, a single 503 error would crash the flow and break server-side rendering.
+
+        // Retry only if it's a 503 and we have retries left
+        if (is503 && attempt < maxRetries - 1) {
+          const waitTime = baseDelay * Math.pow(2, attempt); // exponential backoff
+          console.warn(`[Gemini Retry] Attempt ${attempt + 1} failed due to 503. Retrying in ${waitTime}ms...`);
+          await new Promise(res => setTimeout(res, waitTime));
+        } else {
+          console.error(`[Gemini Error] Failed to generate task list:`, err);
+          throw err;
+        }
+      }
+    }
+
+    throw new Error('Max retries exceeded while attempting to call Gemini API.');
   }
 );
