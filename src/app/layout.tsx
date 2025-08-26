@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: 'TaskWise AI',
-  description: 'Intelligently generate and manage your tasks.',
+  description: 'Intelligently generate and manage your tasks by creating optimized task lists.',
 };
 
 export default function RootLayout({
