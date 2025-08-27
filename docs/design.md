@@ -1,9 +1,10 @@
-# **App Name**: TaskWise AI
+# **App Name**: IntelliLists
 
 ## Core Features:
 
 - Intelligent Task Generation: Generate an ordered and categorized task list from provided inputs using AI.
 - Task Management UI: Allow users to view, edit, and reorder tasks within the app's interface.
+- Task Management UI: Has Reset/Clear button that clears whole list and puts items in a recycle bin where item/items are able to be restored
 - Export Task List: Allow exporting the task list in a format suitable for copy/pasting to other platforms.
 - AI-Powered Categorization Adjustment: Natural Language tool allowing the user to adjust task categories using AI.
 - Persistent Task Storage: Tasks remain saved between browser sessions using user accounts in a SQLite database.

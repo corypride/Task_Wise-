@@ -19,4 +19,4 @@ This will:
 - Build the Next.js application
 - Start the development server
 
-You can then access the application at [http://localhost:3000](http://localhost:3000).
+You can then access the application at [http://localhost:9002](http://localhost:9002).
